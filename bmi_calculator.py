@@ -2,9 +2,97 @@
 
 Calculates BMI and categorizes it according to World Health Organization (WHO) standards.
 Supports both Metric (kg, cm/m) and Imperial (lbs, feet/inches) units.
+Bilingual support: English and Traditional Chinese (zh-TW).
 """
 
-from typing import Tuple
+import sys
+from typing import Dict, Tuple, Any
+
+# Ensure UTF-8 output encoding across platforms (especially Windows PowerShell/cmd)
+if sys.stdout and hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if sys.stderr and hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
+
+TRANSLATIONS: Dict[str, Dict[str, Any]] = {
+    "en": {
+        "title": "BMI CALCULATOR",
+        "results_title": "RESULTS",
+        "lang_name": "English",
+        "unit_header": "Choose your preferred unit system:",
+        "unit_metric": "  1. Metric (kilograms, meters or centimeters)",
+        "unit_imperial": "  2. Imperial (pounds, feet and inches)",
+        "unit_choice_prompt": "\nEnter choice (1 or 2): ",
+        "invalid_choice": "Invalid choice. Please enter 1 or 2.",
+        "prompt_weight_kg": "\nEnter your weight in kilograms (kg): ",
+        "prompt_height_metric": "Enter your height in centimeters (cm) or meters (m): ",
+        "interpreted_cm": "Interpreted {input_val} as centimeters ({height_m:.2f} m).",
+        "prompt_weight_lbs": "\nEnter your weight in pounds (lbs): ",
+        "prompt_height_header": "\nEnter height:",
+        "prompt_feet": "  Feet: ",
+        "prompt_inches": "  Inches (press Enter for 0): ",
+        "err_positive": "Error: Value must be greater than zero. Please try again.",
+        "err_invalid_num": "Error: Invalid number. Please enter a numerical value.",
+        "err_weight_positive": "Weight must be greater than zero.",
+        "err_height_positive": "Height must be greater than zero.",
+        "label_weight": "Weight (kg)  ",
+        "label_height": "Height (m)   ",
+        "label_bmi": "Your BMI     ",
+        "label_category": "Category     ",
+        "label_insight": "Insight      ",
+        "categories": {
+            "underweight": ("Underweight", "Possible nutritional deficiency or other health issues."),
+            "normal": ("Normal weight", "Healthy weight range for most adults."),
+            "overweight": ("Overweight", "Increased risk of cardiovascular and metabolic issues."),
+            "obese_1": ("Obesity Class I (Moderate)", "Moderate risk of obesity-related health conditions."),
+            "obese_2": ("Obesity Class II (Severe)", "Severe risk of obesity-related health conditions."),
+            "obese_3": ("Obesity Class III (Very severe / Morbid)", "Very high risk of obesity-related complications."),
+        },
+    },
+    "zh-tw": {
+        "title": "BMI 身體質量指數計算機",
+        "results_title": "計算結果",
+        "lang_name": "繁體中文",
+        "unit_header": "請選擇偏好的單位系統：",
+        "unit_metric": "  1. 公制 (公斤, 公尺或公分)",
+        "unit_imperial": "  2. 英制 (磅, 呎與吋)",
+        "unit_choice_prompt": "\n請輸入選項 (1 或 2): ",
+        "invalid_choice": "無效選項，請輸入 1 或 2。",
+        "prompt_weight_kg": "\n請輸入您的體重（公斤 kg）：",
+        "prompt_height_metric": "請輸入您的身高（公分 cm 或公尺 m）：",
+        "interpreted_cm": "已將 {input_val} 判斷為公分（{height_m:.2f} 公尺）。",
+        "prompt_weight_lbs": "\n請輸入您的體重（磅 lbs）：",
+        "prompt_height_header": "\n請輸入身高：",
+        "prompt_feet": "  英呎 (Feet): ",
+        "prompt_inches": "  英吋 (Inches，直接按 Enter 為 0): ",
+        "err_positive": "錯誤：數值必須大於零，請重新輸入。",
+        "err_invalid_num": "錯誤：無效數值，請輸入數字。",
+        "err_weight_positive": "體重必須大於零。",
+        "err_height_positive": "身高必須大於零。",
+        "label_weight": "體重 (kg)    ",
+        "label_height": "身高 (m)     ",
+        "label_bmi": "您的 BMI     ",
+        "label_category": "體重分類     ",
+        "label_insight": "健康建議     ",
+        "categories": {
+            "underweight": ("體重過輕", "可能存在營養不良或其他健康問題。"),
+            "normal": ("正常體重", "大多數成年人的健康體重範圍。"),
+            "overweight": ("體重過重", "心血管與代謝疾病風險增加。"),
+            "obese_1": ("輕度肥胖（第一級）", "與肥胖相關健康問題的中度風險。"),
+            "obese_2": ("中度肥胖（第二級）", "與肥胖相關健康問題的重度風險。"),
+            "obese_3": ("重度肥胖（第三級）", "與肥胖相關併發症的極高風險。"),
+        },
+    },
+}
+
+
+def normalize_lang(lang: str) -> str:
+    """Normalize language code to 'en' or 'zh-tw'."""
+    cleaned = (lang or "").strip().lower().replace("_", "-")
+    if cleaned in ("zh-tw", "zh", "tw", "zhtw", "chinese", "traditional-chinese", "2"):
+        return "zh-tw"
+    return "en"
 
 
 def calculate_bmi(weight_kg: float, height_m: float) -> float:
@@ -28,53 +116,83 @@ def calculate_bmi(weight_kg: float, height_m: float) -> float:
     return round(weight_kg / (height_m ** 2), 2)
 
 
-def get_bmi_category(bmi: float) -> Tuple[str, str]:
+def get_bmi_category(bmi: float, lang: str = "en") -> Tuple[str, str]:
     """Return the WHO category and a short health description for a given BMI.
 
     Args:
         bmi: Body Mass Index value.
+        lang: Language code ('en' or 'zh-tw'). Defaults to 'en'.
 
     Returns:
         Tuple of (Category Name, Health Insight).
     """
+    lang_key = normalize_lang(lang)
+    categories = TRANSLATIONS[lang_key]["categories"]
+
     if bmi < 18.5:
-        return "Underweight", "Possible nutritional deficiency or other health issues."
+        return categories["underweight"]
     elif 18.5 <= bmi < 25.0:
-        return "Normal weight", "Healthy weight range for most adults."
+        return categories["normal"]
     elif 25.0 <= bmi < 30.0:
-        return "Overweight", "Increased risk of cardiovascular and metabolic issues."
+        return categories["overweight"]
     elif 30.0 <= bmi < 35.0:
-        return "Obesity Class I (Moderate)", "Moderate risk of obesity-related health conditions."
+        return categories["obese_1"]
     elif 35.0 <= bmi < 40.0:
-        return "Obesity Class II (Severe)", "Severe risk of obesity-related health conditions."
+        return categories["obese_2"]
     else:
-        return "Obesity Class III (Very severe / Morbid)", "Very high risk of obesity-related complications."
+        return categories["obese_3"]
 
 
-def get_positive_float(prompt: str) -> float:
+def get_positive_float(prompt: str, err_positive: str = "Error: Value must be greater than zero. Please try again.", err_invalid: str = "Error: Invalid number. Please enter a numerical value.") -> float:
     """Prompt the user until a valid positive float is entered."""
     while True:
         try:
             val = float(input(prompt).strip())
             if val <= 0:
-                print("Error: Value must be greater than zero. Please try again.")
+                print(err_positive)
                 continue
             return val
         except ValueError:
-            print("Error: Invalid number. Please enter a numerical value.")
+            print(err_invalid)
 
 
 def parse_args():
     import argparse
-    parser = argparse.ArgumentParser(description="Calculate Body Mass Index (BMI).")
+    parser = argparse.ArgumentParser(description="Calculate Body Mass Index (BMI) / 計算身體質量指數 (BMI)。")
     parser.add_argument("-w", "--weight", type=float, help="Weight in kilograms (or lbs if --imperial is set)")
     parser.add_argument("-H", "--height", type=float, help="Height in meters/cm (or inches if --imperial is set)")
     parser.add_argument("--imperial", action="store_true", help="Interpret inputs as imperial units (lbs, inches)")
+    parser.add_argument("-l", "--lang", choices=["en", "zh-tw", "zh_TW"], default=None, help="Language / 語言: en (English), zh-tw (繁體中文)")
     return parser.parse_args()
+
+
+def select_language() -> str:
+    """Prompt user to choose language interactively."""
+    print("=" * 45)
+    print(" Select Language / 選擇語言:")
+    print("   1. English (Default)")
+    print("   2. 繁體中文 (zh-TW)")
+    print("=" * 45)
+    choice = input("Enter choice / 請選擇 (1 or 2, Enter for 1): ").strip()
+    if choice == "2":
+        return "zh-tw"
+    return "en"
 
 
 def main() -> None:
     args = parse_args()
+
+    # Determine language
+    if args.lang:
+        lang = normalize_lang(args.lang)
+    elif args.weight is not None and args.height is not None:
+        # Non-interactive CLI with inputs supplied defaults to English
+        lang = "en"
+    else:
+        # Interactive mode language prompt
+        lang = select_language()
+
+    t = TRANSLATIONS[lang]
 
     if args.weight is not None and args.height is not None:
         # Non-interactive CLI mode
@@ -86,41 +204,44 @@ def main() -> None:
             height_m = args.height / 100.0 if args.height > 3.0 else args.height
     else:
         # Interactive mode
+        print("\n" + "=" * 45)
+        print(f"             {t['title']}")
         print("=" * 45)
-        print("             BMI CALCULATOR                  ")
-        print("=" * 45)
-        print("Choose your preferred unit system:")
-        print("  1. Metric (kilograms, meters or centimeters)")
-        print("  2. Imperial (pounds, feet and inches)")
-        
+        print(t["unit_header"])
+        print(t["unit_metric"])
+        print(t["unit_imperial"])
+
         while True:
-            choice = input("\nEnter choice (1 or 2): ").strip()
+            choice = input(t["unit_choice_prompt"]).strip()
             if choice in ("1", "2"):
                 break
-            print("Invalid choice. Please enter 1 or 2.")
+            print(t["invalid_choice"])
 
         if choice == "1":
             # Metric
-            weight_kg = get_positive_float("\nEnter your weight in kilograms (kg): ")
-            height_input = get_positive_float("Enter your height in centimeters (cm) or meters (m): ")
-            
+            weight_kg = get_positive_float(t["prompt_weight_kg"], t["err_positive"], t["err_invalid_num"])
+            height_input = get_positive_float(t["prompt_height_metric"], t["err_positive"], t["err_invalid_num"])
+
             # If input is greater than 3, assume centimeters and convert to meters
             if height_input > 3.0:
                 height_m = height_input / 100.0
-                print(f"Interpreted {height_input} as centimeters ({height_m:.2f} m).")
+                print(t["interpreted_cm"].format(input_val=height_input, height_m=height_m))
             else:
                 height_m = height_input
         else:
             # Imperial
-            weight_lbs = get_positive_float("\nEnter your weight in pounds (lbs): ")
-            print("\nEnter height:")
-            feet = get_positive_float("  Feet: ")
-            inches = float(input("  Inches (press Enter for 0): ").strip() or "0")
-            if inches < 0:
+            weight_lbs = get_positive_float(t["prompt_weight_lbs"], t["err_positive"], t["err_invalid_num"])
+            print(t["prompt_height_header"])
+            feet = get_positive_float(t["prompt_feet"], t["err_positive"], t["err_invalid_num"])
+            inches_str = input(t["prompt_inches"]).strip() or "0"
+            try:
+                inches = float(inches_str)
+                if inches < 0:
+                    inches = 0.0
+            except ValueError:
                 inches = 0.0
 
             total_inches = (feet * 12.0) + inches
-            # 1 lb = 0.45359237 kg, 1 inch = 0.0254 m
             weight_kg = weight_lbs * 0.45359237
             height_m = total_inches * 0.0254
 
@@ -130,16 +251,16 @@ def main() -> None:
         print(f"Error: {e}")
         return
 
-    category, description = get_bmi_category(bmi)
+    category, description = get_bmi_category(bmi, lang=lang)
 
     print("\n" + "=" * 45)
-    print("                 RESULTS                     ")
+    print(f"                 {t['results_title']}")
     print("=" * 45)
-    print(f"Weight (kg)  : {weight_kg:.2f} kg")
-    print(f"Height (m)   : {height_m:.2f} m")
-    print(f"Your BMI     : {bmi}")
-    print(f"Category     : {category}")
-    print(f"Insight      : {description}")
+    print(f"{t['label_weight']}: {weight_kg:.2f} kg")
+    print(f"{t['label_height']}: {height_m:.2f} m")
+    print(f"{t['label_bmi']}: {bmi}")
+    print(f"{t['label_category']}: {category}")
+    print(f"{t['label_insight']}: {description}")
     print("=" * 45)
 
 
