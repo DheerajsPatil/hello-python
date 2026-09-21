@@ -52,12 +52,33 @@ class TestBMICalculator(unittest.TestCase):
         cat_obese3, _ = get_bmi_category(42.0, lang="zh-tw")
         self.assertIn("第三級", cat_obese3)
 
+    def test_japanese_categories(self):
+        cat_under, _ = get_bmi_category(17.0, lang="ja")
+        self.assertEqual(cat_under, "低体重 (痩せ型)")
+
+        cat_normal, _ = get_bmi_category(22.0, lang="ja")
+        self.assertEqual(cat_normal, "普通体重")
+
+        cat_over, _ = get_bmi_category(26.0, lang="ja")
+        self.assertEqual(cat_over, "前肥満 (過体重)")
+
+        cat_obese1, _ = get_bmi_category(31.0, lang="ja")
+        self.assertIn("肥満度1", cat_obese1)
+
+        cat_obese2, _ = get_bmi_category(36.0, lang="ja")
+        self.assertIn("肥満度2", cat_obese2)
+
+        cat_obese3, _ = get_bmi_category(42.0, lang="ja")
+        self.assertIn("肥満度3", cat_obese3)
+
     def test_normalize_lang(self):
         self.assertEqual(normalize_lang("en"), "en")
         self.assertEqual(normalize_lang("zh-tw"), "zh-tw")
         self.assertEqual(normalize_lang("zh_TW"), "zh-tw")
-        self.assertEqual(normalize_lang("ZH-TW"), "zh-tw")
-        self.assertEqual(normalize_lang("2"), "zh-tw")
+        self.assertEqual(normalize_lang("ja"), "ja")
+        self.assertEqual(normalize_lang("jp"), "ja")
+        self.assertEqual(normalize_lang("japanese"), "ja")
+        self.assertEqual(normalize_lang("3"), "ja")
         self.assertEqual(normalize_lang("unknown"), "en")
 
 

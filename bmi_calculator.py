@@ -2,7 +2,7 @@
 
 Calculates BMI and categorizes it according to World Health Organization (WHO) standards.
 Supports both Metric (kg, cm/m) and Imperial (lbs, feet/inches) units.
-Bilingual support: English and Traditional Chinese (zh-TW).
+Multilingual support: English, Traditional Chinese (zh-TW), and Japanese (ja).
 """
 
 import sys
@@ -84,14 +84,50 @@ TRANSLATIONS: Dict[str, Dict[str, Any]] = {
             "obese_3": ("重度肥胖（第三級）", "與肥胖相關併發症的極高風險。"),
         },
     },
+    "ja": {
+        "title": "BMI 計算機 (肥満度指数)",
+        "results_title": "計算結果",
+        "lang_name": "日本語",
+        "unit_header": "単位系を選択してください：",
+        "unit_metric": "  1. メートル法 (キログラム、メートルまたはセンチメートル)",
+        "unit_imperial": "  2. ヤード・ポンド法 (ポンド、フィートとインチ)",
+        "unit_choice_prompt": "\n選択肢を入力 (1 または 2): ",
+        "invalid_choice": "無効な選択です。1 または 2 を入力してください。",
+        "prompt_weight_kg": "\n体重をキログラム (kg) で入力してください: ",
+        "prompt_height_metric": "身長をセンチメートル (cm) またはメートル (m) で入力してください: ",
+        "interpreted_cm": "{input_val} をセンチメートル ({height_m:.2f} m) として解釈しました。",
+        "prompt_weight_lbs": "\n体重をポンド (lbs) で入力してください: ",
+        "prompt_height_header": "\n身長を入力してください:",
+        "prompt_feet": "  フィート (Feet): ",
+        "prompt_inches": "  インチ (Inches, そのまま Enter で 0): ",
+        "err_positive": "エラー: 0 より大きい数値を入力してください。",
+        "err_invalid_num": "エラー: 有効な数値を入力してください。",
+        "err_weight_positive": "体重は 0 より大きい必要があります。",
+        "err_height_positive": "身長は 0 より大きい必要があります。",
+        "label_weight": "体重 (kg)    ",
+        "label_height": "身長 (m)     ",
+        "label_bmi": "あなたの BMI ",
+        "label_category": "判定区分     ",
+        "label_insight": "アドバイス   ",
+        "categories": {
+            "underweight": ("低体重 (痩せ型)", "栄養不良などの健康リスクの可能性があります。"),
+            "normal": ("普通体重", "成人の適正体重範囲です。"),
+            "overweight": ("前肥満 (過体重)", "心血管疾患や生活習慣病のリスクが高まります。"),
+            "obese_1": ("肥満度1 (軽度肥満)", "肥満に関連する健康障害のリスクが高まります。"),
+            "obese_2": ("肥満度2 (中等度肥満)", "肥満に関連する重度な健康障害のリスクがあります。"),
+            "obese_3": ("肥満度3 (高度肥満)", "肥満に関連する合併症のリスクが非常に高い状態です。"),
+        },
+    },
 }
 
 
 def normalize_lang(lang: str) -> str:
-    """Normalize language code to 'en' or 'zh-tw'."""
+    """Normalize language code to 'en', 'zh-tw', or 'ja'."""
     cleaned = (lang or "").strip().lower().replace("_", "-")
     if cleaned in ("zh-tw", "zh", "tw", "zhtw", "chinese", "traditional-chinese", "2"):
         return "zh-tw"
+    elif cleaned in ("ja", "jp", "japanese", "jpn", "nihongo", "3"):
+        return "ja"
     return "en"
 
 
@@ -121,7 +157,7 @@ def get_bmi_category(bmi: float, lang: str = "en") -> Tuple[str, str]:
 
     Args:
         bmi: Body Mass Index value.
-        lang: Language code ('en' or 'zh-tw'). Defaults to 'en'.
+        lang: Language code ('en', 'zh-tw', or 'ja'). Defaults to 'en'.
 
     Returns:
         Tuple of (Category Name, Health Insight).
@@ -158,24 +194,27 @@ def get_positive_float(prompt: str, err_positive: str = "Error: Value must be gr
 
 def parse_args():
     import argparse
-    parser = argparse.ArgumentParser(description="Calculate Body Mass Index (BMI) / 計算身體質量指數 (BMI)。")
+    parser = argparse.ArgumentParser(description="Calculate Body Mass Index (BMI) / 計算身體質量指數 / BMI計算。")
     parser.add_argument("-w", "--weight", type=float, help="Weight in kilograms (or lbs if --imperial is set)")
     parser.add_argument("-H", "--height", type=float, help="Height in meters/cm (or inches if --imperial is set)")
     parser.add_argument("--imperial", action="store_true", help="Interpret inputs as imperial units (lbs, inches)")
-    parser.add_argument("-l", "--lang", choices=["en", "zh-tw", "zh_TW"], default=None, help="Language / 語言: en (English), zh-tw (繁體中文)")
+    parser.add_argument("-l", "--lang", choices=["en", "zh-tw", "zh_TW", "ja", "jp"], default=None, help="Language / 語言 / 言語: en (English), zh-tw (繁體中文), ja (日本語)")
     return parser.parse_args()
 
 
 def select_language() -> str:
     """Prompt user to choose language interactively."""
     print("=" * 45)
-    print(" Select Language / 選擇語言:")
+    print(" Select Language / 選擇語言 / 言語選択:")
     print("   1. English (Default)")
     print("   2. 繁體中文 (zh-TW)")
+    print("   3. 日本語 (Japanese)")
     print("=" * 45)
-    choice = input("Enter choice / 請選擇 (1 or 2, Enter for 1): ").strip()
+    choice = input("Enter choice / 請選擇 / 選択 (1-3, Enter for 1): ").strip()
     if choice == "2":
         return "zh-tw"
+    elif choice == "3":
+        return "ja"
     return "en"
 
 
